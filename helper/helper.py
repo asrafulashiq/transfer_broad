@@ -197,9 +197,9 @@ def run_cluster(parser, fn_main, lt_system):
                            log_path=log_path,
                            python_cmd="python")
 
-    cluster.notify_job_status(email='asrafulashiq@gmail.com',
-                              on_fail=True,
-                              on_done=False)
+    # cluster.notify_job_status(email='',
+    #                           on_fail=True,
+    #                           on_done=False)
     # configure cluster
     cluster.per_experiment_nb_gpus = params.n_gpus
     cluster.per_experiment_nb_nodes = params.num_nodes

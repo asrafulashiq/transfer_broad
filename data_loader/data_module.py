@@ -13,7 +13,6 @@ from .utils_data import get_split
 class DataModule(object):
     def __init__(self, hparams, conf_path=None) -> None:
         self.hparams = hparams
-        # self._set_suffix()
         if conf_path is None:
             conf_path = "data_loader/config_path.yaml"
         self.conf_data = OmegaConf.load(conf_path)
@@ -22,17 +21,19 @@ class DataModule(object):
                 self.conf_data[key]['data_path'])
 
     def get_path(self, dname):
-        # check if there is any split
-        basename = dname.split("_")[0]
+        basename = dname.split("_")[0]  # check if there is any split
         return self.conf_data[basename]['data_path']
 
     def get_num_class(self, dname):
-        # check if there is any split
-        basename = dname.split("_")[0]
+        basename = dname.split("_")[0]  # check if there is any split
         return self.conf_data[basename]['num_class']
 
     def prepare_data(self, *args, **kwargs):
-        # prepare indices
+        """
+        If necessary 
+            - download datasets
+            - prepare indices and store into cache
+        """
         def fn_prepare(_dataset):
             if isinstance(_dataset, list) or isinstance(_dataset, tuple):
                 for dname in _dataset:
@@ -61,6 +62,7 @@ class DataModule(object):
                          use_ddp=False,
                          *args,
                          **kwargs):
+        """ get train dataloader """
         if self.hparams.dataset is None:
             self.hparams.dataset = self.hparams.val_dataset
         datamgr = utils_data.SimpleDataManager(
@@ -102,6 +104,7 @@ class DataModule(object):
                                use_ddp=False,
                                *args,
                                **kwargs):
+        """ return few-shot data-loader """
         datasets = self.hparams.val_dataset
         if datasets is None or datasets == 'none':
             return None
@@ -143,6 +146,7 @@ class DataModule(object):
                               opt=None,
                               drop_last=True,
                               shuffle=True):
+        """ get dataloader for simple evaluation (linear/finetune) """
         datamgr = utils_data.SimpleDataManager(
             self.hparams.image_size,
             batch_size=self.hparams.batch_size,
@@ -171,6 +175,7 @@ class DataModule(object):
                                    use_ddp=False,
                                    *args,
                                    **kwargs):
+        """ split train data-loader into train/val split, return train """
         _loader = self.train_dataloader(pl_trainer, False, *args, **kwargs)
         dataset = _loader.dataset
 
@@ -201,6 +206,7 @@ class DataModule(object):
                                  use_ddp=False,
                                  *args,
                                  **kwargs):
+        """ split train data-loader into train/val split, return val """
         _loader = self.train_dataloader(pl_trainer, False, *args, **kwargs)
         dataset = _loader.dataset
 
@@ -227,7 +233,10 @@ class DataModule(object):
 
 
 def get_random_split(dataset, trn_percent: float, training=True, seed=0):
-    """ trn_percent: percentage for training """
+    """ split dataset into train/val index
+        Args:
+            trn_percent: percentage for training 
+    """
     rng = np.random.RandomState(seed)
     all_idx = list(range(len(dataset)))
     rng.shuffle(all_idx)

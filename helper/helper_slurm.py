@@ -40,9 +40,6 @@ SLURM_CMD = """#!/bin/bash
 {auto_submit}
 #################
 
-# Have SLURM send you an email when the job ends or fails
-#SBATCH --mail-type=FAIL
-#SBATCH --mail-user={email}
 
 # #task per node
 #SBATCH --ntasks-per-node={ntasks_per_node}
@@ -194,7 +191,7 @@ def run_cluster(parser, fn_main, lt_system):
             num_gpus=params.num_gpus,
             num_nodes=params.num_nodes,
             auto_submit=auto_walltime,
-            email="asrafulashiq@gmail.com",
+            email="",
             ntasks_per_node=params.num_gpus,
             cpus_per_task=params.cpus_per_task,
             mem_per_cpu=params.mem_per_cpu,

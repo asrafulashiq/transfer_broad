@@ -8,10 +8,8 @@ import abc
 import math
 import torchvision
 import torchvision.models.resnet as resnet_models
-from sklearn.metrics import classification_report, accuracy_score
 
 import system.utils_system as utils_system
-# import backbone
 from .few_shot_mixin import FewShotMixin
 from .linear_mixin import LinearMixin, calc_ece
 
@@ -46,7 +44,6 @@ class LightningSystem(pl.LightningModule, FewShotMixin, LinearMixin):
             return None
 
     def setup(self, stage):
-        # self.use_ddp = self.trainer.use_ddp
         if not hasattr(self, "use_ddp"): self.use_ddp = self.trainer.use_ddp
         if stage == 'fit':
             if self.use_ddp:
@@ -63,7 +60,6 @@ class LightningSystem(pl.LightningModule, FewShotMixin, LinearMixin):
         ]
         self.best_metric = [[torch.tensor(-1.), -1]
                             for _ in range(self.val_len)]
-        # self.aggr_class = [AggregatePred() for _ in range(self.val_len)]
 
     @staticmethod
     def add_model_specific_args(parent_parser):
@@ -82,42 +78,22 @@ class LightningSystem(pl.LightningModule, FewShotMixin, LinearMixin):
 
     def load_base(self, ckpt_path=None):
         if ckpt_path is not None:
-            if self.hparams.model == 'moco':
-                # load state dict from mocov2 pretrained weights
-                state_dict = torch.load(
-                    ckpt_path,
-                    map_location=lambda storage, loc: storage)['state_dict']
-                resnet_head = torchvision.models.resnet50()
-                for k in list(state_dict.keys()):
-                    # retain only encoder_q up to before the embedding layer
-                    if k.startswith('module.encoder_q') and not k.startswith(
-                            'module.encoder_q.fc'):
-                        # remove prefix
-                        state_dict[
-                            k[len("module.encoder_q."):]] = state_dict[k]
-                    # delete renamed or unused k
-                    del state_dict[k]
-                resnet_head.load_state_dict(state_dict, strict=False)
-                encoder = nn.Sequential(*(list(resnet_head.children())[:-1] +
-                                          [nn.Flatten()]))
-                self.feature.load_state_dict(encoder.state_dict())
-            else:
-                ckpt = torch.load(
-                    ckpt_path,
-                    map_location=lambda storage, loc: storage)['state_dict']
-                new_state = {}
-                for k, v in ckpt.items():
-                    if 'feature.' in k:
-                        new_state[k.replace('feature.', '')] = v
-                self.feature.load_state_dict(
-                    new_state, strict=not self.hparams.load_flexible)
+            ckpt = torch.load(
+                ckpt_path,
+                map_location=lambda storage, loc: storage)['state_dict']
+            new_state = {}
+            for k, v in ckpt.items():
+                if 'feature.' in k:
+                    new_state[k.replace('feature.', '')] = v
+            self.feature.load_state_dict(new_state,
+                                         strict=not self.hparams.load_flexible)
 
     # --------------------------------- training --------------------------------- #
 
     def on_epoch_start(self) -> None:
         super().on_epoch_start()
         import time
-        time.sleep(1.5)  # wait a bit to kill dataloader workers
+        time.sleep(1.5)  # wait to kill dataloader workers
 
     @abc.abstractmethod
     def training_step(self, batch, batch_idx):
@@ -211,10 +187,6 @@ class LightningSystem(pl.LightningModule, FewShotMixin, LinearMixin):
         else:
             raise ValueError("provide a supported optimizer")
         return optimizer
-
-    # def on_train_epoch_start(self) -> None:
-    #     super().on_train_epoch_start()
-    #     self.log_lr()
 
     def log_lr(self):
         # log learning rate
@@ -314,7 +286,6 @@ class LightningSystem(pl.LightningModule, FewShotMixin, LinearMixin):
             if self.hparams.model.lower() == "resnet10":
                 from utils import backbone
                 encoder = backbone.ResNet10(flatten=True)
-                # raise NotImplementedError
             elif self.hparams.model.lower() == "resnet12":
                 from utils.resnet12_backbone import resnet12
                 encoder = resnet12(avg_pool=True)
@@ -343,16 +314,12 @@ class LightningSystem(pl.LightningModule, FewShotMixin, LinearMixin):
 
                 encoder = nn.Sequential(*(list(resnet_head.children())[:-1] +
                                           [nn.Flatten()]))
-                # self.resnet_head = resnet_head
                 encoder.final_feat_dim = resnet_head.fc.in_features
             else:
                 raise NotImplementedError(
                     f"{self.hparams.model} not implemented")
         else:
-            mod = torchvision.models.video.__dict__[self.hparams.model](
-                pretrained=self.hparams.pretrained)
-            encoder = nn.Sequential(*list(mod.children())[:-1], nn.Flatten())
-            encoder.final_feat_dim = 512
+            raise NotImplementedError("Video not supported yet")
         return encoder
 
     def get_feature_extractor(self):
@@ -360,70 +327,3 @@ class LightningSystem(pl.LightningModule, FewShotMixin, LinearMixin):
 
     def ece_calculate(self, prob, gt):
         return calc_ece(prob, gt)
-
-    # --------------------------------- finetune --------------------------------- #
-
-
-class Classifier(nn.Module):
-    def __init__(self, dim, n_way):
-        super(Classifier, self).__init__()
-        self.fc = nn.Linear(dim, n_way)
-
-        self.fc.weight.data.normal_(mean=0.0, std=0.01)
-        self.fc.bias.data.zero_()
-
-    def forward(self, x):
-        x = self.fc(x)
-        return x
-
-
-class AggregatePred:
-    def __init__(self) -> None:
-        self.reset()
-
-    def update(self,
-               pred: torch.Tensor,
-               gt: torch.Tensor,
-               label_seq: torch.Tensor = None,
-               concat_all=False) -> None:
-        if concat_all:
-            pred = concat_all_ddp(pred)
-            gt = concat_all_ddp(gt)
-
-        pred_np = pred.data.cpu().numpy().tolist()
-        gt_np = gt.data.cpu().numpy().tolist()
-        if label_seq is not None:
-            label_map = self.get_label_map(label_seq)
-            pred_np = [label_map[x] for x in pred_np]
-            gt_np = [label_map[x] for x in gt_np]
-        self.gt.extend(gt_np)
-        self.pred.extend(pred_np)
-
-        # return current accuracy
-        return accuracy_score(gt_np, pred_np)
-
-    def get_label_map(self, label_seq: torch.Tensor):
-        return {i: c.item() for i, c in enumerate(label_seq)}
-
-    def get_report(self):
-        return classification_report(self.gt, self.pred)
-
-    def get_accuracy(self):
-        return accuracy_score(self.gt, self.pred)
-
-    def reset(self) -> None:
-        self.gt = []
-        self.pred = []
-
-
-@torch.no_grad()
-def concat_all_ddp(tensor):
-    try:
-        world_size = self.trainer.num_nodes * self.trainer.num_processes
-    except AssertionError:
-        return tensor
-    tensors_gather = [torch.ones_like(tensor) for _ in range(world_size)]
-    torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
-
-    output = torch.cat(tensors_gather, dim=0)
-    return output
