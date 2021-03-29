@@ -1,0 +1,151 @@
+# dataset path and num class
+
+# Object Recognition: similar to imagenet
+ImageNet1K:
+  data_path: "~/datasets/cdfsl/imagenet1k"
+  num_class: 1000
+  split:
+
+ImageNet100:
+  data_path: "~/datasets/cdfsl/imagenet1k"
+  num_class: 100
+  split:
+
+miniImageNet:
+  data_path: "~/datasets/cdfsl/mini-ImageNet"
+  num_class: 100
+  num_data: 60000
+
+miniImageNet_test:
+  data_path: "~/datasets/cdfsl/mini-ImageNet"
+  num_class: 20
+  num_data: 20000
+
+tieredImageNet:
+  data_path: "~/datasets/cdfsl/tieredImageNet"
+  num_class: 351
+
+# Agriculture
+CropDisease:
+  data_path: "~/datasets/cdfsl/CropDiseases"
+  num_class: 38
+  num_data: 54305
+  split: 43456,10849
+
+DeepWeeds:
+  data_path: "~/datasets/cdfsl/DeepWeeds"
+  num_class: 9
+  num_data: 17509
+
+# Scene classification
+SUN397:
+  data_path: "~/datasets/cdfsl/SUN397"
+  num_class: 397
+  num_data: 108754
+
+# fine-grained classification
+CUB:
+  data_path: "~/datasets/cdfsl/CUB_200_2011"
+  num_class: 200
+  num_data: 6032
+  split: 3000,3033
+
+Flowers102:
+  data_path: "~/datasets/cdfsl/102flowers"
+  num_class: 102
+  num_data: 6149
+  split: 6149,1020
+
+Pets:
+  data_path: "~/datasets/cdfsl/oxford_pet"
+  num_class: 37
+  num_data: 7349
+
+# Satellite
+EuroSAT:
+  data_path: "~/datasets/cdfsl/EuroSAT/2750"
+  num_class: 10
+  num_data: 27000
+
+Resisc45:
+  data_path: "~/datasets/cdfsl/Resisc45"
+  num_class: 45
+  num_data: 31500
+
+# Medical
+ChestX:
+  data_path: "~/datasets/cdfsl/chest_xray"
+  num_class: 7
+  num_data: 25848
+
+ISIC:
+  data_path: "~/datasets/cdfsl/ISIC"
+  num_class: 7
+  num_data: 10015
+
+# Texture
+DTD:
+  data_path: "~/datasets/cdfsl/dtd/"
+  num_class: 47
+  # num_data: 5640
+  # split: 5640,1880
+
+# Symbolic
+Omniglot:
+  data_path: "~/datasets/cdfsl/omniglot"
+  num_class: 1623
+  num_data: 13180
+
+SVHN:
+  data_path: "~/datasets/cdfsl/SVHN"
+  num_class: 10
+  num_data: 73257
+  split: 73257,26032
+
+# Object
+CIFAR100:
+  data_path: "~/datasets/cdfsl/CIFAR100"
+  num_class: 100
+  num_data: 60000
+  split: 50000,10000
+
+CIFAR10:
+  data_path: "~/datasets/cdfsl/CIFAR10"
+  num_class: 10
+  num_data: 50000
+  split: 50000,10000
+
+# Fashion
+DeepFashion:
+  data_path: "~/datasets/cdfsl/DeepFashion"
+  num_class: 50
+  num_data:
+  split: 14000,4000
+
+# Art
+Kaokore:
+  data_path: "~/datasets/cdfsl/kaokore"
+  num_class: 8
+  num_data: 6568
+  split:
+
+ExDark:
+  data_path: "~/datasets/cdfsl/ExDark"
+  num_class: 12
+  num_data: 7363
+  split:
+
+Sketch:
+  data_path: "~/datasets/cdfsl/sketch"
+  num_class: 1000
+  num_data: 50889
+
+SIN:
+  data_path: "~/datasets/cdfsl/SIN"
+  num_class: 1000
+  num_data:
+
+SININ:
+  data_path: "~/datasets/cdfsl"
+  num_class: 1000
+  num_data:
