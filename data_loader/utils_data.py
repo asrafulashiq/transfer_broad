@@ -18,7 +18,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 identity = lambda x: x
 
-# NOTE: change path if you have different root
+# NOTE: temporary store cache in TMP_PATH
 TMP_PATH = os.path.expanduser("~/.tmp")
 DATA_ROOT = os.path.expanduser("~/datasets/cdfsl")
 
@@ -254,7 +254,7 @@ class SetDataset(torch.utils.data.Dataset):
 
         self.sub_dataloader = []
 
-        self.gen = torch.Generator().manual_seed(opt.seed + 214743647) 
+        self.gen = torch.Generator().manual_seed(opt.seed + 214743647)
         sub_data_loader_params = dict(
             batch_size=batch_size,
             shuffle=True,
