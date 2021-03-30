@@ -27,20 +27,10 @@ class FewShotMixin():
                 self.logger.log(
                     f"Test Acc ({self.val_names[dataset_idx]}) = {acc_mean:4.4f} +- {acc_std:4.4f}",
                     level="DEBUG")
-            # if acc_mean > self.best_metric[dataset_idx][0]:
-            #     self.best_metric[dataset_idx] = [
-            #         acc_mean.detach(), self.current_epoch
-            #     ]
-
-            # if self.logger is not None:
-            #     self.logger.log(
-            #         f"Best metric ({self.val_names[dataset_idx]}): {self.best_metric[dataset_idx][0]} @ {self.best_metric[dataset_idx][1]}",
-            #         "INFO")
 
             self.acc_meter[dataset_idx].reset()
 
             mean_val.append(acc_mean)
-            # max_val.append(self.best_metric[dataset_idx][0])
 
         acc_mean = torch.mean(torch.stack(mean_val))
         tqdm_dict = {
@@ -102,66 +92,6 @@ class FewShotMixin():
             del pretrained_model
             del classifier
 
-        elif self.hparams.fine_tune_type == "episodic":
-            pretrained_model = copy.deepcopy(encoder)
-            classifier = Classifier(pretrained_model.final_feat_dim, n_way)
-            classifier.to(self.device)
-            classifier.train()
-
-            scores = ftune.episodic_train_test(
-                pretrained_model,
-                classifier,
-                self.train_dataloader().dataset,
-                x_a_i,
-                y_a_i,
-                y[:, :n_support].flatten(),
-                x_b_i,
-                y_test=y_query,
-                freeze_backbone=self.hparams.freeze_backbone,
-                total_epoch=self.hparams.deep_finetune_epoch,
-                batch_size=self.hparams.deep_finetune_batch_size,
-                use_norm=self.hparams.deep_finetune_use_norm,
-                device=self.device,
-                opt=self.hparams,
-                last_k=self.hparams.deep_finetune_lastk)
-
-            torch.set_grad_enabled(False)
-            _, topk_labels = scores.data.topk(1, 1, True, True)
-            topk_ind = topk_labels.squeeze()
-
-            # free gpu spaces
-            del pretrained_model
-            del classifier
-
-        elif self.hparams.fine_tune_type == "deep_proto":
-            pretrained_model = copy.deepcopy(encoder)
-            classifier = None
-
-            batch_size = 4
-            total_epoch = 50
-            scores = ftune.finetune_proto(
-                pretrained_model,
-                classifier,
-                x_a_i,
-                y_a_i,
-                x_b_i,
-                y_test=None,
-                freeze_backbone=self.hparams.freeze_backbone,
-                total_epoch=total_epoch,
-                batch_size=batch_size,
-                use_norm=self.hparams.use_norm,
-                n_way=n_way,
-                n_support=n_support,
-                device=self.device)
-
-            torch.set_grad_enabled(False)
-            topk_scores, topk_labels = scores.data.topk(1, 1, True, True)
-            topk_ind = topk_labels.squeeze()
-
-            # free gpu spaces
-            del pretrained_model
-            del classifier
-
         elif self.hparams.fine_tune_type == "NN":
             topk_ind = ftune.NN(encoder,
                                 x_a_i,
@@ -187,10 +117,6 @@ class FewShotMixin():
             raise NotImplementedError
         _val = accuracy(topk_ind, y_query)
         self.acc_meter[dataset_idx].add(_val, n=1)
-
-        # if hasattr(self, 'aggr_class'):
-        #     self.aggr_class[dataset_idx].update(topk_ind, y_query,
-        #                                         y[:, 0].flatten())
 
         return {
             "acc": self.acc_meter[dataset_idx].value,

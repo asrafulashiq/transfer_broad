@@ -24,11 +24,6 @@ class LightningSystem(system_abstract.LightningSystem):
             self.hparams.linear_drop
         ) if self.hparams.linear_drop > 0 else torch.nn.Identity()
 
-        # FIXME had to add this for some version issue
-        # if self.hparams.ckpt is not None and "base_plus_moco" in self.hparams.ckpt:
-        #     self.base_head = self.classifier
-        # self.freeze_backbone()
-
     def forward(self, x):
         if len(x) == 2 and (isinstance(x, list) or isinstance(x, tuple)):
             x = x[0]
@@ -120,54 +115,6 @@ class LightningSystem(system_abstract.LightningSystem):
                 # Replace existing ones
                 self.trainer.optimizers = [opt]
         return
-
-    def adjust_learning_rate(self, optimizer, epoch, base_lr):
-        if epoch < 0:
-            return False
-        if self.hparams.scheduler == 'cosine':
-            eta_min = 1e-8
-            lr = eta_min + (base_lr - eta_min) * (
-                1 + math.cos(math.pi * epoch / self.hparams.max_epochs)) / 2
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = lr
-        elif self.hparams.scheduler == 'step':
-            if not hasattr(self, '_milestones'):
-                self._milestones = {
-                    int(_v): i + 1
-                    for i, _v in enumerate(
-                        self.hparams.step_lr_milestones.split(","))
-                }
-            if epoch in self._milestones:
-                _lr = (base_lr *
-                       self.hparams.lr_decay_rate**self._milestones[epoch])
-                for param_group in optimizer.param_groups:
-                    param_group['lr'] = _lr
-        elif self.hparams.scheduler == 'exponential':
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = param_group['lr'] * (
-                    1 - self.hparams.lr_decay_rate)
-        else:
-            return None
-        return True
-
-    def optimizer_step(self,
-                       epoch,
-                       batch_idx,
-                       optimizer,
-                       optimizer_idx,
-                       optimizer_closure=None,
-                       *args,
-                       **kwargs):
-        if epoch >= self.hparams.unfreeze_warmup_epoch:
-            if self.hparams.unfreeze_lastk != 0:
-                self.adjust_learning_rate(
-                    optimizer, epoch - self.hparams.unfreeze_warmup_epoch,
-                    self.hparams.lr * self.hparams.linear_feature_multiplier)
-            else:
-                self.adjust_learning_rate(optimizer, epoch, self.hparams.lr)
-
-        optimizer.step(closure=optimizer_closure)
-        optimizer.zero_grad()
 
     @staticmethod
     def add_model_specific_args(parent_parser):
@@ -299,6 +246,25 @@ class LightningSystem(system_abstract.LightningSystem):
         self.log_dict(info, logger=True, prog_bar=True)
 
         self.logger.log_csv(info, step=self.global_step)
+
+    def optimizer_step(self,
+                       epoch,
+                       batch_idx,
+                       optimizer,
+                       optimizer_idx,
+                       optimizer_closure=None,
+                       *args,
+                       **kwargs):
+        if epoch >= self.hparams.unfreeze_warmup_epoch:
+            if self.hparams.unfreeze_lastk != 0:
+                self.adjust_learning_rate(
+                    optimizer, epoch - self.hparams.unfreeze_warmup_epoch,
+                    self.hparams.lr * self.hparams.linear_feature_multiplier)
+            else:
+                self.adjust_learning_rate(optimizer, epoch, self.hparams.lr)
+
+        optimizer.step(closure=optimizer_closure)
+        optimizer.zero_grad()
 
     def adjust_learning_rate(self,
                              optimizer,
