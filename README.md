@@ -85,7 +85,7 @@ You can also run the evaluation script by `bash scripts/run_transfer_bn.sh -m tu
 
 - mini-ImageNet pretrained models can be found [here](https://drive.google.com/drive/folders/13CVCdLRKtjo5h1Q-i0j8Be9IPA5GWb8P?usp=sharing)
 
-
+You can also convert our pretrained checkpoint into torchvision resnet style checkpoint by `python utils/convert_to_torchvision_resnet.py -i [input ckpt] -o [output path]`
 
 ## Citation
 
