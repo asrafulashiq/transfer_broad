@@ -1,6 +1,7 @@
 <div align="center">    
 
 # A Broad Study on the Transferability of Visual Representations with Contrastive Learning
+[![Paper](https://img.shields.io/badge/paper-arXiv%3A2103.13517-red)](https://arxiv.org/abs/2103.13517)
 
 </div>
 
