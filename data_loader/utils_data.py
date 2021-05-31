@@ -22,6 +22,7 @@ identity = lambda x: x
 TMP_PATH = os.path.expanduser("~/.tmp")
 DATA_ROOT = os.path.expanduser("~/datasets/cdfsl")
 
+os.makedirs(TMP_PATH, exist_ok = True)
 
 def get_split(dname):
     splits = dname.split("_")
