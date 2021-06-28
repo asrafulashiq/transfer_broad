@@ -60,7 +60,7 @@ rm dtd-r1.0.1.tar.gz
 
 # Kaokore dataset (https://github.com/rois-codh/kaokore)
 mkdir -p kaokore
-python ${prev_directory}/data_loader/kaokore/download.py --dataset_version 1.1 --dir ${HOME}/datasets/cdfsl/kaokore
+python ${prev_directory}/data_loader/download_kaokore.py --dataset_version 1.1 --dir ${HOME}/datasets/cdfsl/kaokore
 
 # DeepWeeds (https://github.com/AlexOlsen/DeepWeeds)
 wget https://nextcloud.qriscloud.org.au/index.php/s/a3KxPawpqkiorST/download
