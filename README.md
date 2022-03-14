@@ -93,13 +93,12 @@ You can also convert our pretrained checkpoint into torchvision resnet style che
 If you find this repo useful for your research, please consider citing the paper:
 
 ```
-@misc{islam2021broad,
-      title={A Broad Study on the Transferability of Visual Representations with Contrastive Learning}, 
-      author={Ashraful Islam and Chun-Fu Chen and Rameswar Panda and Leonid Karlinsky and Richard Radke and Rogerio Feris},
-      year={2021},
-      eprint={2103.13517},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
+@inproceedings{islam2021broad,
+  title={A broad study on the transferability of visual representations with contrastive learning},
+  author={Islam, Ashraful and Chen, Chun-Fu Richard and Panda, Rameswar and Karlinsky, Leonid and Radke, Richard and Feris, Rogerio},
+  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  pages={8845--8855},
+  year={2021}
 }
 ```
 
